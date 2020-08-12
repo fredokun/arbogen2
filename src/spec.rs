@@ -47,7 +47,7 @@ pub struct Rule {
     rhs : RHS
 }
 
-type Spec = HashMap<String, Rule>;
+pub type Spec = HashMap<String, Rule>;
 
 pub fn eval_spec(spec : &Spec, z : f64, prev : &Values) -> Values {
     let mut ev : Values = HashMap::new();
@@ -57,7 +57,7 @@ pub fn eval_spec(spec : &Spec, z : f64, prev : &Values) -> Values {
     return ev;
 }
 
-fn btree_spec() -> Spec {
+pub fn btree_spec() -> Spec {
     let mut spec : HashMap<String, Rule> = HashMap::new();
     let v1 : Vec<Elem> = vec![Elem::Ref("tip".to_string()), Elem::Ref("node".to_string())];
     let rhs1 = RHS::Sum(v1);
@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn test_eval_spec() {
 	let btspec = btree_spec();
-    	let mut prev : Values = HashMap::new();
+    	let mut prev : HashMap<String, f64> = HashMap::new();
     	prev.insert("btree".to_string(), 1.0);
     	prev.insert("node".to_string(), 2.0);
     	prev.insert("tip".to_string(), 1.0);
