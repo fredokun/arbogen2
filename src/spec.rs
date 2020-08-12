@@ -28,7 +28,7 @@ impl Eval for Elem {
 
 pub enum RHS {
     Elem(Elem),
-    Sum(Vec<Elem>),
+    Sum(Vec<(Elem, f64)>),
     Prod(Vec<Elem>)
 }
 
@@ -36,7 +36,7 @@ impl Eval for RHS {
  fn eval(&self, z : f64, prev : &Values) -> f64 {
      match self {
 	 RHS::Elem(e) => e.eval(z, prev),
-	 RHS::Sum(v) => v.into_iter().map(|e| e.eval(z, prev)).sum(),
+	 RHS::Sum(v) => v.into_iter().map(|(e,_)| e.eval(z, prev)).sum(),
 	 RHS::Prod(v) => v.into_iter().map(|e| e.eval(z, prev)).product()
      }
  }
@@ -59,7 +59,7 @@ pub fn eval_spec(spec : &Spec, z : f64, prev : &Values) -> Values {
 
 pub fn btree_spec() -> Spec {
     let mut spec : HashMap<String, Rule> = HashMap::new();
-    let v1 : Vec<Elem> = vec![Elem::Ref("tip".to_string()), Elem::Ref("node".to_string())];
+    let v1 : Vec<(Elem, f64)> = vec![(Elem::Ref("tip".to_string()), 0.0), (Elem::Ref("node".to_string()), 0.0)];
     let rhs1 = RHS::Sum(v1);
     spec.insert("btree".to_string(),Rule { build: false, rhs: rhs1 });
     let v2 : Vec<Elem> = vec![Elem::Z, Elem::Ref("btree".to_string()), Elem::Ref("btree".to_string())];
@@ -100,11 +100,11 @@ mod tests {
 
     	prev.insert("node".to_string(), 2.0);
     	prev.insert("tip".to_string(), 1.0);
-    	let v = vec![Elem::Ref("node".to_string()), Elem::Ref("tip".to_string()), Elem::Z];
-	let v2 = v.clone();
-    	let rhs2 = RHS::Sum(v);
+    	let v2 = vec![(Elem::Ref("node".to_string()), 0.0), (Elem::Ref("tip".to_string()), 0.0), (Elem::Z, 0.0)];
+    	let rhs2 = RHS::Sum(v2);
     	assert_eq!(rhs2.eval(1.5, &prev), 4.5);
-    	let rhs3 = RHS::Prod(v2);
+    	let v3 = vec![Elem::Ref("node".to_string()), Elem::Ref("tip".to_string()), Elem::Z];
+    	let rhs3 = RHS::Prod(v3);
     	assert_eq!(rhs3.eval(1.5, &prev), 3.0);
     }
 
