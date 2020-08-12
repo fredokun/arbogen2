@@ -24,12 +24,23 @@ impl Eval for Elem {
  }
 }
 
-/*
-enum RHS {
+enum RHS<'a> {
     RElem(Elem),
-    RSum([Elem]),
-    RProd([Elem])
+    RSum(&'a Vec<Elem>),
+    RProd(&'a Vec<Elem>)
 }
+
+impl<'a> Eval for RHS<'a> {
+ fn eval(&self, z : f64, prev : &HashMap<String, f64>) -> f64 {
+     match self {
+	 RHS::RElem(e) => e.eval(z, prev),
+	 RHS::RSum(v) => v.into_iter().map(|e| e.eval(z, prev)).sum(),
+	 RHS::RProd(v) => v.into_iter().map(|e| e.eval(z, prev)).product()
+     }
+ }
+}
+
+/*
 
 struct Rule {
     build : bool,
@@ -60,5 +71,19 @@ mod tests {
 	prev.insert("node".to_string(), 2.0);
 	prev.insert("tip".to_string(), 1.0);
 	assert_eq!(Elem::Ref("node".to_string()).eval(4.0, &prev), 2.0);
+    }
+
+    #[test]
+    fn test_eval_RHS() {
+	let mut prev : HashMap<String, f64> = HashMap::new();
+	assert_eq!(RHS::RElem(Elem::Z).eval(1.5, &prev), 1.5);
+
+	prev.insert("node".to_string(), 2.0);
+	prev.insert("tip".to_string(), 1.0);
+	let v = vec![Elem::Ref("node".to_string()), Elem::Ref("tip".to_string()), Elem::Z];
+	let rhs2 = RHS::RSum(&v);
+	assert_eq!(rhs2.eval(1.5, &prev), 4.5);
+	let rhs3 = RHS::RProd(&v);
+	assert_eq!(rhs3.eval(1.5, &prev), 3.0);
     }
 }
