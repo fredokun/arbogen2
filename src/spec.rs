@@ -1,8 +1,9 @@
 
 use std::collections::HashMap;
+use crate::utils::Values;
 
 trait Eval {
-    fn eval(&self, z : f64, prev : &HashMap<String, f64>) -> f64;
+    fn eval(&self, z : f64, prev : &Values) -> f64;
 }
 
 #[derive(Clone)]
@@ -13,7 +14,7 @@ pub enum Elem {
 }
 
 impl Eval for Elem {
- fn eval(&self, z : f64, prev : &HashMap<String, f64>) -> f64 {
+ fn eval(&self, z : f64, prev : &Values) -> f64 {
      match self {
 	 Elem::One => 1.0,
 	 Elem::Z => z,
@@ -32,7 +33,7 @@ pub enum RHS {
 }
 
 impl Eval for RHS {
- fn eval(&self, z : f64, prev : &HashMap<String, f64>) -> f64 {
+ fn eval(&self, z : f64, prev : &Values) -> f64 {
      match self {
 	 RHS::Elem(e) => e.eval(z, prev),
 	 RHS::Sum(v) => v.into_iter().map(|e| e.eval(z, prev)).sum(),
@@ -48,8 +49,8 @@ pub struct Rule {
 
 type Spec = HashMap<String, Rule>;
 
-pub fn eval_spec(spec : &Spec, z : f64, prev : &HashMap<String, f64>) -> HashMap<String, f64> {
-    let mut ev : HashMap<String, f64> = HashMap::new();
+pub fn eval_spec(spec : &Spec, z : f64, prev : &Values) -> Values {
+    let mut ev : Values = HashMap::new();
     for (rname, rule) in spec.iter() {
 	ev.insert(rname.clone(), rule.rhs.eval(z, prev));
     }
@@ -86,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_eval_ref() {
-    	let mut prev : HashMap<String, f64> = HashMap::new();
+    	let mut prev : Values = HashMap::new();
     	prev.insert("node".to_string(), 2.0);
     	prev.insert("tip".to_string(), 1.0);
     	assert_eq!(Elem::Ref("node".to_string()).eval(4.0, &prev), 2.0);
@@ -94,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_eval_rhs() {
-    	let mut prev : HashMap<String, f64> = HashMap::new();
+    	let mut prev : Values = HashMap::new();
     	assert_eq!(RHS::Elem(Elem::Z).eval(1.5, &prev), 1.5);
 
     	prev.insert("node".to_string(), 2.0);
@@ -110,7 +111,7 @@ mod tests {
     #[test]
     fn test_eval_spec() {
 	let btspec = btree_spec();
-    	let mut prev : HashMap<String, f64> = HashMap::new();
+    	let mut prev : Values = HashMap::new();
     	prev.insert("btree".to_string(), 1.0);
     	prev.insert("node".to_string(), 2.0);
     	prev.insert("tip".to_string(), 1.0);
