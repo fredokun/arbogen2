@@ -40,15 +40,21 @@ impl<'a> Eval for RHS<'a> {
  }
 }
 
-/*
-
-struct Rule {
+struct Rule<'a> {
     build : bool,
-    rhs : RHS
+    rhs : RHS<'a>
 }
 
-*/
-    
+type Spec<'a> = HashMap<String, Rule<'a>>;
+
+fn btree_spec<'a>() -> Spec<'a> {
+    let mut spec : HashMap<String, Rule> = HashMap::new();
+    let v : Vec<Elem> = vec![Elem::Ref("tip".to_string()), Elem::Ref("node".to_string())];
+    let rhs1 = RHS::RSum(&v);
+    spec.insert("btree".to_string(),Rule { build: false, rhs: rhs1 });
+    return spec;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,4 +92,6 @@ mod tests {
 	let rhs3 = RHS::RProd(&v);
 	assert_eq!(rhs3.eval(1.5, &prev), 3.0);
     }
+
+
 }
