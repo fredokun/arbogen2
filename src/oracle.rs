@@ -4,16 +4,6 @@ use std::collections::HashMap;
 use crate::utils::{Values, norm_dist};
 use crate::spec::{Spec, eval_spec};
 
-/*
-(defn iter [gram z eps debug]
-  (loop [v1 (mapkv (fn [k _] [k 0.0]) gram)]
-    (let [v2 (eval-grammar gram z v1)]
-      ;; (when debug (println "[iter] v2=" v2 "norm=" (norm v1 v2)))
-      (if (<= (norm v1 v2) eps)
-        v2
-        (recur v2)))))
-*/
-
 fn iteration(spec : &Spec, z : f64, eps : f64) -> Values {
     let mut v1 = HashMap::new();
     for (rname, _) in spec.iter() {
@@ -29,6 +19,20 @@ fn iteration(spec : &Spec, z : f64, eps : f64) -> Values {
 
     return v2;
 } 
+
+/*
+(defn diverge? [v eps]
+  (some-kv (fn [_ w] (or (< w 0.0) (> w (/ 1.0 eps)))) v))
+*/
+
+fn diverge(v : &Values, eps : f64) -> bool {
+    for (_, &w) in v.iter() {
+	if w < 0.0 || w > 1.0 / eps {
+	    return true;
+	}
+    }
+    return false;
+}
 
 #[cfg(test)]
 mod tests {
