@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 use crate::utils::Values;
 
-trait Eval {
+pub trait Eval {
     fn eval(&self, z : f64, prev : &Values) -> f64;
 }
 
@@ -26,6 +26,7 @@ impl Eval for Elem {
  }
 }
 
+#[derive(Clone)]
 pub enum RHS {
     Elem(Elem),
     Sum(Vec<(Elem, f64)>),
@@ -42,9 +43,10 @@ impl Eval for RHS {
  }
 }
 
+#[derive(Clone)]
 pub struct Rule {
-    build : bool,
-    rhs : RHS
+    pub build : bool,
+    pub rhs : RHS
 }
 
 pub type Spec = HashMap<String, Rule>;
