@@ -1,14 +1,14 @@
 
 use rand::prelude::*;
-use rand_pcg::{Pcg64, Lcg128Xsl64};
+use rand_xoshiro::Xoshiro256StarStar;
 
 use crate::spec::{Elem};
 
-pub fn make_rng(seed : u64) -> Lcg128Xsl64 {
-    return Pcg64::seed_from_u64(seed);
+pub fn make_rng(seed : u64) -> Xoshiro256StarStar {
+    return Xoshiro256StarStar::seed_from_u64(seed);
 }
 
-fn choose(rng : &mut Lcg128Xsl64, elems : &Vec<(Elem, f64)>) -> Elem {
+fn choose(rng : &mut Xoshiro256StarStar, elems : &Vec<(Elem, f64)>) -> Elem {
     let x : f64 = rng.gen();
     for (elem, proba) in elems.iter() {
 	if x <= *proba {
@@ -17,7 +17,6 @@ fn choose(rng : &mut Lcg128Xsl64, elems : &Vec<(Elem, f64)>) -> Elem {
     }
     panic!("Choose should not fail (please report)");
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -34,6 +33,18 @@ mod tests {
 	    Elem::Ref(_) => true,
 	    _ => false
 	});
+    }
+
+    #[test]
+    fn test_serialize() {
+	let mut rng = make_rng(42);
+	let serialized = serde_json::to_string(&rng).unwrap();
+	let x : f64 = rng.gen();
+	let y : f64 = rng.gen();
+	assert!(x != y);
+	let mut deserialized : Xoshiro256StarStar = serde_json::from_str(&serialized).unwrap();
+	let z : f64 = deserialized.gen();
+	assert_eq!(x, z);
     }
 }
 
