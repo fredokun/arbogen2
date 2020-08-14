@@ -68,7 +68,6 @@ fn search_size(rng_source : &RandGen, spec : &Spec, rname :&str,
 
     while attempts < max_attempts {
 	attempts += 1;
-	//println!("attempts={}", attempts);
 	let save_rng = rng.clone();
 	match next_size(&mut rng, &spec, rname, max_size) {
 	    None => { println!("Not found"); },
@@ -158,11 +157,18 @@ mod tests {
 	let btspec = btree_spec();
 	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
 	let btspec = weighted_spec(btspec, z, &v);
+	// 1) we search a binary tree of size 1000->10000
 	match search_size(&rng, &btspec, "btree", 1000, 10000, 1000) {
 	    None => assert!(false),
-	    Some((size, rng)) => {
+	    Some((size, mut rng)) => {
+		// 2) we found a tree of size 1621
 		assert_eq!(size, 1621);
-		
+		// 3) we check that the first size with the same randgen 
+		//    produces the same tree (same size)
+		match next_size(&mut rng, &btspec, "btree", 10000) {
+		    None => assert!(false),
+		    Some(size) => assert_eq!(size, 1621) // <-- same size !
+		};
 	    }
 	};
     }
