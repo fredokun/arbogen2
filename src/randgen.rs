@@ -74,11 +74,7 @@ fn search_size(rng_source : &RandGen, spec : &Spec, rname :&str,
 	    None => { println!("Not found"); },
 	    Some(size) => 
 		if min_size <= size && size <= max_size {
-		    println!("found size={}", size);
 		    return Some((size, save_rng));
-		} else {
-		    //println!("not found size={}", size);
-		    rng = save_rng;
 		}
 	};
     }
@@ -130,6 +126,30 @@ mod tests {
 	    None => assert!(false),
 	    Some(size) => assert_eq!(size, 0)
 	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 0)
+	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 410)
+	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 0)
+	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 1)
+	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 13)
+	};
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 0)
+	};
     }
 
     #[test]
@@ -138,10 +158,12 @@ mod tests {
 	let btspec = btree_spec();
 	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
 	let btspec = weighted_spec(btspec, z, &v);
-	println!("wpec={:?}", btspec);
-	match search_size(&rng, &btspec, "btree", 10, 1000, 100000) {
+	match search_size(&rng, &btspec, "btree", 1000, 10000, 1000) {
 	    None => assert!(false),
-	    Some((size, _)) => assert_eq!(size, 0)
+	    Some((size, rng)) => {
+		assert_eq!(size, 1621);
+		
+	    }
 	};
     }
 }
