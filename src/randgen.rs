@@ -77,7 +77,7 @@ fn search_size(rng_source : &RandGen, spec : &Spec, rname :&str,
 		    println!("found size={}", size);
 		    return Some((size, save_rng));
 		} else {
-		    println!("not found size={}", size);
+		    //println!("not found size={}", size);
 		    rng = save_rng;
 		}
 	};
@@ -138,9 +138,10 @@ mod tests {
 	let btspec = btree_spec();
 	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
 	let btspec = weighted_spec(btspec, z, &v);
-	match search_size(&rng, &btspec, "btree", 10, 1000, 10000) {
+	println!("wpec={:?}", btspec);
+	match search_size(&rng, &btspec, "btree", 10, 1000, 100000) {
 	    None => assert!(false),
-	    Some((size, _)) => assert_eq!(size, 1)
+	    Some((size, _)) => assert_eq!(size, 0)
 	};
     }
 }

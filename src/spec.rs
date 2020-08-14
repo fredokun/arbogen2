@@ -6,7 +6,7 @@ pub trait Eval {
     fn eval(&self, z : f64, prev : &Values) -> f64;
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Elem {
     One,
     Z,
@@ -26,7 +26,7 @@ impl Eval for Elem {
  }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum RHS {
     Elem(Elem),
     Sum(Vec<(Elem, f64)>),
@@ -43,7 +43,7 @@ impl Eval for RHS {
  }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Rule {
     pub build : bool,
     pub rhs : RHS
