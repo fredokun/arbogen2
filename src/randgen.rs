@@ -2,13 +2,18 @@
 use rand::prelude::*;
 use rand_xoshiro::Xoshiro256StarStar;
 
-use crate::spec::{Elem};
+use crate::spec::{Spec, RHS, Elem, btree_spec};
+use crate::oracle::{oracle, weighted_spec};
 
-pub fn make_rng(seed : u64) -> Xoshiro256StarStar {
-    return Xoshiro256StarStar::seed_from_u64(seed);
+// TODO: introduce a trait so that it's easier
+// to change the random generator
+type RandGen = Xoshiro256StarStar;
+
+pub fn make_rng(seed : u64) ->  RandGen {
+    return RandGen::seed_from_u64(seed);
 }
 
-fn choose(rng : &mut Xoshiro256StarStar, elems : &Vec<(Elem, f64)>) -> Elem {
+fn choose(rng : &mut RandGen, elems : &Vec<(Elem, f64)>) -> Elem {
     let x : f64 = rng.gen();
     for (elem, proba) in elems.iter() {
 	if x <= *proba {
@@ -16,6 +21,69 @@ fn choose(rng : &mut Xoshiro256StarStar, elems : &Vec<(Elem, f64)>) -> Elem {
 	}
     }
     panic!("Choose should not fail (please report)");
+}
+
+fn next_size(rng : &mut RandGen, spec : &Spec, rname :&str, max_size : u64) -> Option<u64> {
+    let mut elems : Vec<Elem> = Vec::new();
+    let elem = Elem::Ref(rname.to_string());
+    elems.push(elem);
+    let mut size : u64 = 0;
+
+    while size < max_size {
+	let elem = elems.pop();
+	match elem {
+	    None => { return Some(size); },
+	    Some(Elem::One) => (),
+	    Some(Elem::Z) => { size += 1; },
+	    Some(Elem::Ref(rname)) => {
+		let rhs = &spec.get(&rname.to_string()).unwrap().rhs;
+		match rhs {
+		    RHS::Elem(elem) => { elems.push(elem.clone()); },
+		    RHS::Sum(choices) => { 
+			//+ (let [[src' elem'] (choose src args)]
+			//   (recur src' elem' size cont))
+			
+			let elem = choose(rng, choices);
+			elems.push(elem);
+		    },
+		    RHS::Prod(pelems) => {
+			for pelem in pelems.iter() {
+			    elems.push(pelem.clone());
+			}
+		    }	
+		};
+	    }
+	};
+    }
+
+    // too big
+    return None;
+}
+
+fn search_size(rng_source : &RandGen, spec : &Spec, rname :&str,
+	       min_size : u64, max_size : u64, max_attempts : u32) -> Option<(u64, RandGen)> {
+    let mut attempts = 0;
+
+    let mut rng = rng_source.clone();
+
+    while attempts < max_attempts {
+	attempts += 1;
+	//println!("attempts={}", attempts);
+	let save_rng = rng.clone();
+	match next_size(&mut rng, &spec, rname, max_size) {
+	    None => { println!("Not found"); },
+	    Some(size) => 
+		if min_size <= size && size <= max_size {
+		    println!("found size={}", size);
+		    return Some((size, save_rng));
+		} else {
+		    println!("not found size={}", size);
+		    rng = save_rng;
+		}
+	};
+    }
+    
+    return None;
 }
 
 #[cfg(test)]
@@ -38,13 +106,42 @@ mod tests {
     #[test]
     fn test_serialize() {
 	let mut rng = make_rng(42);
+	let mut rng2 = rng.clone(); // XXX: serialization not need because cloning works...
 	let serialized = serde_json::to_string(&rng).unwrap();
 	let x : f64 = rng.gen();
 	let y : f64 = rng.gen();
 	assert!(x != y);
-	let mut deserialized : Xoshiro256StarStar = serde_json::from_str(&serialized).unwrap();
+	let mut deserialized : RandGen = serde_json::from_str(&serialized).unwrap();
 	let z : f64 = deserialized.gen();
 	assert_eq!(x, z);
+	let u : f64 = rng2.gen();
+	assert_eq!(x, u);
+	let v : f64 = rng2.gen();
+	assert_eq!(y, v);
+    }
+
+    #[test]
+    fn test_next_size() {
+	let mut rng = make_rng(42);
+	let btspec = btree_spec();
+	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
+	let btspec = weighted_spec(btspec, z, &v);
+	match next_size(&mut rng, &btspec, "btree", 1000) {
+	    None => assert!(false),
+	    Some(size) => assert_eq!(size, 0)
+	};
+    }
+
+    #[test]
+    fn test_search_size() {
+	let mut rng = make_rng(42);
+	let btspec = btree_spec();
+	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
+	let btspec = weighted_spec(btspec, z, &v);
+	match search_size(&rng, &btspec, "btree", 10, 1000, 10000) {
+	    None => assert!(false),
+	    Some((size, _)) => assert_eq!(size, 1)
+	};
     }
 }
 
