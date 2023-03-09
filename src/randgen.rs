@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn test_search_size() {
-	let mut rng = make_rng(42);
+	let rng = make_rng(42);
 	let btspec = btree_spec();
 	let (z, v) = oracle(&btspec, 0.0, 1.0, 0.00001, 0.000001);
 	let btspec = weighted_spec(btspec, z, &v);
